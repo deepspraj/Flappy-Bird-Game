@@ -234,7 +234,7 @@ class Game:
         self.game_over_screen = False
         game_icon = pygame.image.load(os.path.join(base_directory, "resources", "images", "icon.png"))
         pygame.display.set_icon(game_icon)
-        pygame.display.set_caption('Flappy Bird')
+        pygame.display.set_caption('Flappy Bird   ---dsp')
 
         if (pygame.display.Info().current_w > 1280) and (pygame.display.Info().current_h > 720):
             self.down_fall = 0.07
@@ -267,12 +267,13 @@ class Game:
         for current_pipe in self.pipe.pipes_list:
             if current_pipe.colliderect(self.bird.bird_rectangle):
                 raise "Bird collided with the pipe"
+
+            if current_pipe.midtop[1] < 0:
+                if self.bird.bird_rectangle.bottom < current_pipe.midtop[1]:
+                    raise "Bird escaped the game space"
         
         if self.bird.bird_rectangle.bottomright[1] >= 400:
             raise "Bird collided with the floor"
-        
-        if self.bird.bird_rectangle.bottomright[1] <= 24:
-            raise "Bird escaped the game space"
 
     def start_game(self):
         SPAWN_NEW_PIPE = pygame.USEREVENT
@@ -340,6 +341,7 @@ class Game:
                 self.pipe.pipes_list.clear()
                 self.bird.bird_rectangle.centery = 50
                 self.scoreboard.score = 0
+                self.displacement = 0
                 self.game_screen.blit(self.background_image, (0,0))
                 self.game_screen.blit(self.game_over, (48,100))
                 self.scoreboard.draw_high_score()
