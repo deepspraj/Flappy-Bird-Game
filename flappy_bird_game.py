@@ -150,8 +150,9 @@ class Bird:
         self.bird = self.bird_images_list[self.current_flap]
         self.current_flap += 1
 
-    def draw_bird(self):
-        self.screen.blit(self.bird, self.bird_rectangle)
+    def rotating_and_drawing_bird(self, angle):
+        rotating_bird = pygame.transform.rotozoom(self.bird, -angle*10, 1)
+        self.screen.blit(rotating_bird, self.bird_rectangle)
 
 class Pipes:
     def __init__(self, screen):
@@ -236,7 +237,7 @@ class Game:
         pygame.display.set_caption('Flappy Bird')
 
         if (pygame.display.Info().current_w > 1280) and (pygame.display.Info().current_h > 720):
-            self.down_fall = 0.1
+            self.down_fall = 0.07
             self.game_screen = pygame.display.set_mode((576, 1024))
             if (6<self.hour<19):
                 self.background_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'background-day.png')).convert_alpha()
@@ -247,7 +248,7 @@ class Game:
         
         else:
             self.game_screen = pygame.display.set_mode((288,512))
-            self.down_fall = 0.08
+            self.down_fall = 0.07
             self.game_over = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'gameover.png')).convert_alpha()
             self.message = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'message.png')).convert_alpha()
 
@@ -310,13 +311,15 @@ class Game:
                     message_rect = self.message.get_rect(center=(144,256))
                     self.game_screen.blit(self.message, message_rect)
 
+
                 if self.game_activity and not self.initiated_game and not self.game_over_screen:
+
                     self.displacement += self.down_fall
                     self.bird.bird_rectangle.centery += self.displacement
                     self.game_screen.blit(self.background_image, (0, 0))
                     
                     self.bird.swinging_bird()
-                    self.bird.draw_bird()
+                    self.bird.rotating_and_drawing_bird(self.displacement)
                     self.pipe.move_pipe()
                     self.pipe.draw_pipe()
                     self.floor.moving_floor(self.moving_x)
