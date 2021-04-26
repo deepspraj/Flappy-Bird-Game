@@ -39,7 +39,6 @@ class Score:
             self.eight_image = pygame.transform.scale2x(self.eight_image)
             self.nine_image = pygame.transform.scale2x(self.nine_image)
             
-
     def draw_score(self):
         self.actual_score = int(ceil(self.score/2))
         temp_score = int(ceil(self.score/2))
@@ -79,30 +78,22 @@ class Score:
             number_rect_2 = number_count[0].get_rect(midright=(144,100))
             self.screen.blit(number_count[0], number_rect_2 )
 
-
-
-
-
-
     def high_score_reader(self):
         current_score = self.actual_score
         file_score = 0
-
         high_score_file = open(os.path.join(base_directory, 'resources', 'highscore.txt'), 'r')
         file_score = high_score_file.read()
         high_score_file.close()
-
         if current_score > int(file_score):
             high_score_file = open(os.path.join(base_directory, 'resources', 'highscore.txt'), 'w')
             file_score = high_score_file.write(str(current_score))
             high_score_file.close()
 
-
     def draw_high_score(self):
         text = 'Highscore ' + str(self.high_score)
-        FONT = pygame.font.Font(os.path.join(base_directory, 'resources', 'font', 'FlappyBirdy.ttf'), 50)
+        FONT = pygame.font.Font(os.path.join(base_directory, 'resources', 'font', 'Flappy-Bird.ttf'), 50)
         display_high_score = FONT.render(text, True, (255, 255, 255))
-        display_high_score = display_high_score.get_rect(center=(144,50))
+        display_high_score = display_high_score.get_rect(center=(144,256))
         self.screen.blit(FONT.render(text, True, (255, 255, 255)), display_high_score)
 
 
@@ -150,23 +141,17 @@ class Bird:
                 self.bird_mid_flap_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'yellowbird-midflap.png')).convert_alpha()
                 self.bird_down_flap_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'yellowbird-downflap.png')).convert_alpha()
         
-
         self.bird_rectangle = self.bird_mid_flap_image.get_rect(center=(50, 200))
         self.bird_images_list = [self.bird_top_flap_image, self.bird_mid_flap_image, self.bird_down_flap_image]
 
     def swinging_bird(self):
         if self.current_flap > 2:
             self.current_flap = 0
-
         self.bird = self.bird_images_list[self.current_flap]
-
         self.current_flap += 1
 
     def draw_bird(self):
-
         self.screen.blit(self.bird, self.bird_rectangle)
-
-
 
 class Pipes:
     def __init__(self, screen):
@@ -187,7 +172,6 @@ class Pipes:
             self.flipped_pipe_image = pygame.transform.scale2x(self.flipped_pipe_image)
 
         else:
-
             if (self.random_number == 0):
                 self.pipe_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'pipe-green.png')).convert_alpha()
                 self.flipped_pipe_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'pipe-green-revert.png')).convert_alpha()
@@ -203,28 +187,22 @@ class Pipes:
 
         return bottom_pipe, top_pipe
 
-
     def draw_pipe(self):
-
         for current_pipe in self.pipes_list:
             if current_pipe.bottom > 460:
                 self.screen.blit(self.pipe_image, current_pipe)
             else:
                 self.screen.blit(self.flipped_pipe_image, current_pipe)
-
                 
     def move_pipe(self):
         for current_pipe in self.pipes_list:
             current_pipe.centerx -= 1
 
-        
     def remove_useless_pipe(self, score):
         for current_pipe in self.pipes_list:
             if current_pipe.centerx < -20:
                 score += 1
                 self.pipes_list.remove(current_pipe)
-
-    
         return score
    
 class Floor:
@@ -250,7 +228,12 @@ class Game:
         _, _, _, self.hour, _ = map(int, time.strftime("%Y %m %d %H %M").split())
         self.displacement = 0
         self.moving_x = 0
-        self.game_activity = True
+        self.game_activity = False
+        self.initiated_game = True
+        self.game_over_screen = False
+        game_icon = pygame.image.load(os.path.join(base_directory, "resources", "images", "icon.png"))
+        pygame.display.set_icon(game_icon)
+        pygame.display.set_caption('Flappy Bird')
 
         if (pygame.display.Info().current_w > 1280) and (pygame.display.Info().current_h > 720):
             self.down_fall = 0.1
@@ -264,7 +247,7 @@ class Game:
         
         else:
             self.game_screen = pygame.display.set_mode((288,512))
-            self.down_fall = 0.1
+            self.down_fall = 0.08
             self.game_over = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'gameover.png')).convert_alpha()
             self.message = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'message.png')).convert_alpha()
 
@@ -273,15 +256,13 @@ class Game:
             else:
                 self.background_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'background-night.png')).convert_alpha()
         
+
         self.bird = Bird(self.game_screen)
         self.pipe = Pipes(self.game_screen)
         self.floor = Floor(self.game_screen)
         self.scoreboard = Score(self.game_screen)
-    
-
-    
+        
     def collision_detector(self): 
-            
         for current_pipe in self.pipe.pipes_list:
             if current_pipe.colliderect(self.bird.bird_rectangle):
                 raise "Bird collided with the pipe"
@@ -292,11 +273,9 @@ class Game:
         if self.bird.bird_rectangle.bottomright[1] <= 24:
             raise "Bird escaped the game space"
 
-
     def start_game(self):
-
         SPAWN_NEW_PIPE = pygame.USEREVENT
-        pygame.time.set_timer(SPAWN_NEW_PIPE, 2000)
+        pygame.time.set_timer(SPAWN_NEW_PIPE, 1500)
 
         while True:
 
@@ -308,22 +287,30 @@ class Game:
                 if (event.type == SPAWN_NEW_PIPE) and self.game_activity:
                     self.pipe.pipes_list.extend(self.pipe.create_pipe())
             
-
                 if event.type == pygame.KEYDOWN :
-                    if ((event.key == pygame.K_q) or (event.key == pygame.K_ESCAPE)) and self.game_activity:
+                    if ((event.key == pygame.K_q) or (event.key == pygame.K_ESCAPE)) and not self.game_activity:
                         pygame.quit()
                         exit()
 
                     if (event.key == pygame.K_SPACE) and self.game_activity:
                         self.displacement = 0
-                        self.displacement = -2
+                        self.displacement = -4
 
-                    if (event.key == pygame.K_RETURN) and not self.game_activity:
+                    if (event.key == pygame.K_RETURN) and not self.game_activity and self.initiated_game:
+                        self.initiated_game = False
                         self.game_activity = True
-            
-            try:
-                if self.game_activity:
 
+                    if (event.key == pygame.K_RETURN) and self.game_over_screen:
+                        self.game_over_screen = False
+                        self.initiated_game = True
+
+            try:
+                if self.initiated_game and not self.game_over_screen:
+                    self.game_screen.blit(self.background_image, (0,0))
+                    message_rect = self.message.get_rect(center=(144,256))
+                    self.game_screen.blit(self.message, message_rect)
+
+                if self.game_activity and not self.initiated_game and not self.game_over_screen:
                     self.displacement += self.down_fall
                     self.bird.bird_rectangle.centery += self.displacement
                     self.game_screen.blit(self.background_image, (0, 0))
@@ -344,38 +331,19 @@ class Game:
                     self.scoreboard.high_score_reader()
 
             except:
-
-                self.game_activity = False 
+                self.game_over_screen = True
+                self.game_activity = False
+                self.initiated_game = False
                 self.pipe.pipes_list.clear()
                 self.bird.bird_rectangle.centery = 50
                 self.scoreboard.score = 0
                 self.game_screen.blit(self.background_image, (0,0))
                 self.game_screen.blit(self.game_over, (48,100))
-                self.game_screen.blit(self.message, (48,193))
                 self.scoreboard.draw_high_score()
-
-
-
 
             pygame.display.flip()
             pygame.time.Clock().tick(FPS)
 
-
-
-
-
-   
-
-
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
     game = Game()
     game.start_game()
-    # game.temp()
