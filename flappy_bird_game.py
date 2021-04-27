@@ -308,26 +308,25 @@ class Game:
     def start_game(self):
         SPAWN_NEW_PIPE = pygame.USEREVENT
         pygame.time.set_timer(SPAWN_NEW_PIPE, 1500)
+        run_main_while = True
 
-        while True:
+        while run_main_while:
 
             for event in pygame.event.get():
                 if (event.type == pygame.QUIT):
-                    pygame.quit()
-                    exit()
+                    run_main_while = False
 
                 if (event.type == SPAWN_NEW_PIPE) and self.game_activity:
                     self.pipe.pipes_list.extend(self.pipe.create_pipe())
             
                 if event.type == pygame.KEYDOWN :
                     if ((event.key == pygame.K_q) or (event.key == pygame.K_ESCAPE)) and not self.game_activity:
-                        pygame.quit()
-                        exit()
+                        run_main_while = False
 
                     if (event.key == pygame.K_SPACE) and self.game_activity:
                         self.wings_sound_play()
                         self.displacement = 0
-                        self.displacement = -1
+                        self.displacement = -3
 
                     if (event.key == pygame.K_RETURN) and not self.game_activity and self.initiated_game:
                         self.swoosh_sound_play()
