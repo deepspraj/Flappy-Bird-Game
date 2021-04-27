@@ -16,6 +16,8 @@ class Score:
         self.high_score = high_score_file.read()
         high_score_file.close()
         self.actual_score = 0
+        self.previous_score = 0
+        self.point_gain_sound_channel = pygame.mixer.Channel(3)
         self.zero_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', '0.png')).convert_alpha()
         self.one_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', '1.png')).convert_alpha()
         self.two_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', '2.png')).convert_alpha()
@@ -44,7 +46,7 @@ class Score:
         temp_score = int(ceil(self.score/2))
         temp_score = [int(num) for num in str(temp_score)]
         number_count = []
-
+        
         if len(temp_score)>0:
             for i in temp_score:
                 if i == 0:
@@ -78,6 +80,15 @@ class Score:
             number_rect_2 = number_count[0].get_rect(midright=(144,100))
             self.screen.blit(number_count[0], number_rect_2 )
 
+        if self.previous_score < self.actual_score:
+            self.point_gain_sound_play()
+            self.previous_score = self.actual_score
+
+    def point_gain_sound_play(self):
+        point_sound = pygame.mixer.Sound(os.path.join(base_directory, 'resources', 'audio' ,'point.wav'))
+        self.point_gain_sound_channel.set_volume(0.25)
+        self.point_gain_sound_channel.play(point_sound)
+
     def high_score_reader(self):
         current_score = self.actual_score
         file_score = 0
@@ -95,7 +106,6 @@ class Score:
         display_high_score = FONT.render(text, True, (255, 255, 255))
         display_high_score = display_high_score.get_rect(center=(144,256))
         self.screen.blit(FONT.render(text, True, (255, 255, 255)), display_high_score)
-
 
 class Bird:
     def __init__(self, screen):
@@ -232,6 +242,9 @@ class Game:
         self.game_activity = False
         self.initiated_game = True
         self.game_over_screen = False
+        self.bird_crash_sound_channel = pygame.mixer.Channel(0)
+        self.bird_wings_sound_channel = pygame.mixer.Channel(1)
+        self.swoosh_sound_channel = pygame.mixer.Channel(2)
         game_icon = pygame.image.load(os.path.join(base_directory, "resources", "images", "icon.png"))
         pygame.display.set_icon(game_icon)
         pygame.display.set_caption('Flappy Bird   ---dsp')
@@ -257,22 +270,39 @@ class Game:
             else:
                 self.background_image = pygame.image.load(os.path.join(base_directory, 'resources', 'images', 'background-night.png')).convert_alpha()
         
-
         self.bird = Bird(self.game_screen)
         self.pipe = Pipes(self.game_screen)
         self.floor = Floor(self.game_screen)
         self.scoreboard = Score(self.game_screen)
-        
+    
+    def wings_sound_play(self):
+        wings_sound = pygame.mixer.Sound(os.path.join(base_directory, 'resources', 'audio' ,'wing.wav'))
+        self.bird_wings_sound_channel.set_volume(0.25)
+        self.bird_wings_sound_channel.play(wings_sound)
+
+    def swoosh_sound_play(self):
+        swoosh_sound = pygame.mixer.Sound(os.path.join(base_directory, 'resources', 'audio' ,'swoosh.wav'))
+        self.swoosh_sound_channel.set_volume(0.25)
+        self.swoosh_sound_channel.play(swoosh_sound)
+
+    def hit_sound_play(self):
+        hit_sound = pygame.mixer.Sound(os.path.join(base_directory, 'resources', 'audio' ,'hit.wav'))
+        self.bird_crash_sound_channel.set_volume(0.25)
+        self.bird_crash_sound_channel.play(hit_sound)
+
     def collision_detector(self): 
         for current_pipe in self.pipe.pipes_list:
             if current_pipe.colliderect(self.bird.bird_rectangle):
+                self.hit_sound_play()
                 raise "Bird collided with the pipe"
 
             if current_pipe.midtop[1] < 0:
                 if self.bird.bird_rectangle.bottom < current_pipe.midtop[1]:
+                    self.hit_sound_play()
                     raise "Bird escaped the game space"
         
         if self.bird.bird_rectangle.bottomright[1] >= 400:
+            self.hit_sound_play()
             raise "Bird collided with the floor"
 
     def start_game(self):
@@ -295,14 +325,17 @@ class Game:
                         exit()
 
                     if (event.key == pygame.K_SPACE) and self.game_activity:
+                        self.wings_sound_play()
                         self.displacement = 0
-                        self.displacement = -4
+                        self.displacement = -1
 
                     if (event.key == pygame.K_RETURN) and not self.game_activity and self.initiated_game:
+                        self.swoosh_sound_play()
                         self.initiated_game = False
                         self.game_activity = True
 
                     if (event.key == pygame.K_RETURN) and self.game_over_screen:
+                        self.swoosh_sound_play()
                         self.game_over_screen = False
                         self.initiated_game = True
 
@@ -342,6 +375,7 @@ class Game:
                 self.bird.bird_rectangle.centery = 50
                 self.scoreboard.score = 0
                 self.displacement = 0
+                self.scoreboard.previous_score = 0
                 self.game_screen.blit(self.background_image, (0,0))
                 self.game_screen.blit(self.game_over, (48,100))
                 self.scoreboard.draw_high_score()
